@@ -13,6 +13,7 @@ define([
   return Layout.extend({
     initialize: function(options) {
       Layout.prototype.initialize.call(options, this);
+    
     }
   });
 
