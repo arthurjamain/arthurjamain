@@ -2,8 +2,12 @@ define([
   'underscore',
   'backbone',
   'jquery',
-  'socket.io'
-], function(_, Backbone, $, io) {
+  'socket.io',
+  'lib/joshlib/Layout',
+  'lib/joshlib/List',
+  'text!Templates/TestList.html',
+  'text!Templates/TestListItem.html'
+], function(_, Backbone, $, io, Layout, List, tplList, tplListItem) {
   
   var App = function(opt) {
     this.initialize(opt);
@@ -20,10 +24,29 @@ define([
      * @function
      */
     initialize: function(opt) {
+            
+      window.l = new List({
+        el: '#testlist',
+        template: tplList,
+        itemTemplate: tplListItem,
+        collection: new Backbone.Collection([
+          {
+            name: 'lulz'
+          },
+          {
+            name: 'lulz2'
+          },
+          {
+            name: 'lulz3'
+          }
+        ])
+      });
       
-      console.log(io);
+      l.render();
       
-      this.socket = io.connect('http://192.168.1.43:27042');
+      console.log(l);
+      
+      this.socket = io.connect('http://raspberrypi.local:27042');
       $('#startbutton').on('click', _.bind(function() {
         this.socket.emit('player.play')
       }, this));
