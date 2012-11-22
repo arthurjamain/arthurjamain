@@ -2,12 +2,8 @@ define([
   'underscore',
   'backbone',
   'jquery',
-  'socket.io',
-  'lib/joshlib/Layout',
-  'lib/joshlib/List',
-  'text!Templates/TestList.html',
-  'text!Templates/TestListItem.html'
-], function(_, Backbone, $, io, Layout, List, tplList, tplListItem) {
+  'Views/Player'
+], function(_, Backbone, $, Player) {
   
   var App = function(opt) {
     this.initialize(opt);
@@ -17,7 +13,9 @@ define([
   _.extend(App.prototype, Backbone.Events, {
     
     socket: null,
-    
+    views: {
+      
+    },
     /**
      * Initialize the applications.
      *
@@ -25,35 +23,19 @@ define([
      */
     initialize: function(opt) {
             
-      window.l = new List({
-        el: '#testlist',
-        template: tplList,
-        itemTemplate: tplListItem,
-        collection: new Backbone.Collection([
-          {
-            name: 'lulz'
-          },
-          {
-            name: 'lulz2'
-          },
-          {
-            name: 'lulz3'
-          }
-        ])
+      this.createPlayer();
+      this.views.player.render();
+      
+      this.views.player.on('play', function() {
+        console.log('yay');
+      })
+    },
+    
+    createPlayer: function() {
+      
+      this.views.player = new Player({
+        el: '#player'
       });
-      
-      l.render();
-      
-      console.log(l);
-      
-      this.socket = io.connect('http://raspberrypi.local:27042');
-      $('#startbutton').on('click', _.bind(function() {
-        this.socket.emit('player.play')
-      }, this));
-      $('#stopbutton').on('click', _.bind(function() {
-        this.socket.emit('player.stop')
-      }, this));
-      
     }
   });
   

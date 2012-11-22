@@ -54,9 +54,8 @@ define(['lib/joshlib/View','underscore', 'jquery'], function(UIElement, _, $) {
       // The following flag prevents the base View class from triggering
       // the "load" event at the end of the "enhance" function.
       this.customLoadEvent = true;
-
       this.setChildren(options.children);
-
+    
       // Propagate "shown", "hidden" events to the view's children
       this.on('shown', function () {
         _.each(this.children, function (child) {
