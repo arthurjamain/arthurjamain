@@ -42,9 +42,9 @@
 /*global define*/
 
 define([
-  "lib/joshlib/View",
-  "jquery",
-  "underscore"
+  'lib/joshlib/View',
+  'jquery',
+  'underscore'
 ], function (UIElement, $, _) {
 
   /**
@@ -63,14 +63,18 @@ define([
      */
     initialize: function(options) {
       if (options.template){
-        this.template = this.compileTemplate(options.template);
+        if(typeof options.template === 'function') {
+          this.template = options.template;
+        } else {
+          this.template = this.compileTemplate(options.template);
+        }
       }
       else if (options.templateEl) {
         this.template = this.compileTemplate($(options.templateEl).text());
       }
 
       this.setModel(options.model);
-      
+
       UIElement.prototype.initialize.call(this, options);
     },
 

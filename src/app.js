@@ -2,43 +2,71 @@ define([
   'underscore',
   'backbone',
   'jquery',
-  'Views/Player'
-], function(_, Backbone, $, Player) {
-  
+  'views/layout',
+  'views/content',
+  'views/card'
+], function(
+  _,
+  Backbone,
+  $,
+  Layout,
+  Content,
+  Card
+) {
+
   var App = function(opt) {
     this.initialize(opt);
     window.app = this;
   };
-  
+
+  var Views = {
+    Card: Card,
+    Content: Content
+  };
+
   _.extend(App.prototype, Backbone.Events, {
-    
+
     socket: null,
-    views: {
-      
-    },
+
     /**
      * Initialize the applications.
      *
      * @function
      */
     initialize: function(opt) {
-            
-      this.createPlayer();
-      this.views.player.render();
-      
-      this.views.player.on('play', function() {
-        console.log('yay');
-      })
+
+      this.initLayout(opt);
+      this.layout.render();
+
     },
-    
-    createPlayer: function() {
-      
-      this.views.player = new Player({
-        el: '#player'
+
+    initLayout: function() {
+      var card = this.createView('Card', {
+        model: new Backbone.Model({a: 'b'})
       });
+      var content = this.createView('Content', {
+
+      });
+      this.layout = new Layout({
+        el: '#app',
+        children: {
+          card: card,
+          content: content
+        }
+      });
+
+      return this.layout;
+    },
+
+    createView: function(view, opt) {
+      opt = _.extend(opt || {}, {
+
+      });
+      return new Views[view](opt);
     }
+
   });
-  
+
   return App;
-  
+
 });
