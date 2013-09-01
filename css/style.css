@@ -225,12 +225,19 @@ body {
   font-size: 14px;
 }
 
+.card .contact {
+  padding-top: 15px;
+  font-size: 14px;
+}
+
 .card .contact p {
   font-family: 'Libre Baskerville';
-  padding: 20px 20px 0 20px;
+  padding: 0px 20px 0 20px;
   text-align: center;
-  color: #555;
-} 
+  color: #444;
+  margin-bottom: 20px;
+  line-height: 32px;
+}
 
 .card .contact li {
   width: 100px;
@@ -248,7 +255,7 @@ body {
 
 .card .content a {
   color: #555;
-  -webkit-transition: color 300ms ease-in, text-shadow 300ms ease-in;
+  -webkit-transition: color 200ms ease-in, text-shadow 200ms ease-in;
 }
 
 .card nav ul {
