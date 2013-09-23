@@ -1,7 +1,7 @@
 var express = require("express"),
     fs      = require('fs'),
     app     = express(),
-    port    = 80,
+    port    = process.env.PORT || 80,
     index;
 
 app.configure(function(){
