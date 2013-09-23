@@ -1,0 +1,99 @@
+<!DOCTYPE>
+<html>
+  <head>
+    <title>Arthur Jamain</title>
+    <link href='http://fonts.googleapis.com/css?family=Libre+Baskerville' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <meta name="viewport" content="width=630, user-scalable=no">
+  </head>
+
+  <body>
+    <div id="app">
+      <div id="card" class="card">
+
+        <div class="content">
+          <nav>
+            <ul>
+              <!-- <li><a class="link" data-target="folio" href="#folio">Folio</a></li> -->
+              <li><a class="link" data-target="about" href="#about">About</a></li>
+              <li><a class="link" data-target="contact" href="#contact">Contact</a></li>
+            </ul>
+          </nav>
+
+          <div class="slider">
+            <section name="contact" class="slide contact">
+              <p>
+                ~ Mail ~ <br /> <a href="mailto:arthur.jamain@gmail.com" rel="mail">arthur.jamain@gmail.com</a>
+              </p>
+              <p>
+                ~ Other services ~ <br /> <a target="_blank" href="https://plus.google.com/u/1/106292774108277187362">Google +</a>, <a target="_blank" href="http://github.com/arthurjamain">GitHub</a> or <a target="_blank" href="http://www.linkedin.com/profile/view?id=31797404">LinkedIn</a>
+              </p>
+            </section>
+            <section name="about" class="slide about current">
+              <p class="intro">
+                Hi ! I'm <em>Arthur Jamain</em>.<br>
+                I write Web Applications.
+              </p>
+              <hr>
+              <p class="info">
+                Located in Paris, France. Developer @ <a target="_blank" href="http://joshfire.com">Joshfire</a>.<br />
+                I like solving problems, tinkering systems, crafting interfaces and drinking good coffee.
+              </p>
+            </section>
+          </div>
+        </div>
+
+        <div class="upper">
+          <h1 class="title">Arthur Jamain</h1>
+        </div>
+        <div class="upper-lateral-shadow"></div>
+
+        <div class="lower">
+          <h2 class="baseline">Code and Various Thoughts</h2>
+        </div>
+
+        <div class="lower-lateral-shadow"></div>
+        <div class="lower-bottom-shadow"></div>
+      </div>
+    </div>
+
+    <script type="text/javascript" src="lib/jquery.js"></script>
+    <script type="text/javascript">
+      $(function() {
+
+        var slideWidth = parseInt($('section').width(), 10);
+        var $slider = $('.slider');
+        var currentIndex = 0, currentSlide;
+
+        $('.upper, .lower').on('click', function() {
+          $('#card').toggleClass('open');
+        });
+
+        $('.link').on('click', function() {
+          var $from = $('.current'),
+              $to,
+              targetClass = $(this).data('target'),
+              targetIndex = $(this).parent().index(),
+              direction = currentIndex < targetIndex ? 'l' : 'r';
+
+          if(targetClass && targetClass !== currentSlide) {
+            currentIndex = targetIndex;
+            currentSlide = targetClass;
+            $to = $('.slide.' + targetClass);
+
+            $to.removeClass('lin lout rin rout animable').addClass(direction + 'in');
+            $from.removeClass('lin lout rin rout animable').addClass(direction + 'out');
+
+            $('.selected-menu').removeClass('selected-menu');
+            $(this).addClass('selected-menu');
+
+            setTimeout(function() {
+              $to.addClass('animable current');
+              $from.addClass('animable').removeClass('current');
+            });
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
