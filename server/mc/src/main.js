@@ -1,14 +1,15 @@
 requirejs.config({
   baseUrl: '/mc',
   paths: {
-    'jquery': 'lib/jquery',
-    'philogl': 'lib/PhiloGL'
+    'jquery'      : 'lib/jquery',
+    'philogl'     : 'lib/PhiloGL',
+    'underscore'  : 'lib/underscore',
+    'socket.io'  : document.location.protocol + '//' + document.location.hostname + '/socket.io/socket.io.js'
   }
 });
 
-define(['jquery', 'philogl', 'src/AGGLManager', 'src/AGObjLoader'], function($, phi, AGGLManager, AGObjLoader) {
+define(['src/AGApp'], function(AGApp) {
 
-  wglManager = new AGGLManager('mainwindow');
-  map = new AGObjLoader("http://localhost/mc/obj/tower.obj");
+  window._app = new AGApp();
 
 });

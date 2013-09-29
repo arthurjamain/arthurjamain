@@ -318,7 +318,7 @@ function AGSkyBox(c, x, y, z) {
 
 }
 
-return function AGObjLoader(url) {
+return function AGObjLoader(url, scene, app) {
 
   var v = [];
   var t = [];
@@ -341,6 +341,7 @@ return function AGObjLoader(url) {
   var skybox;
   var swap;
 
+  this.app = app;
   // Called when the map is deleted
   // Frees memory
   this.removeFromScene = function() {
@@ -367,20 +368,21 @@ return function AGObjLoader(url) {
     scene.models = [];
   };
 
+  var self = this;
 
   //Get Model Data
   var req = new PhiloGL.IO.XHR({
       url: url,
     onSuccess: function(text) {
-        //uiManager.splash.downloadDone();
+      self.app.setProgress(0);
       setTimeout(function() {
         //Read / Parse it
         parseModelData(text);
       }, 100);
-      },
-      onError: function(e) {
-        alert("An error ocurred while downloading the model.");
-        //console.log("XHR Error : " + e);
+    },
+    onError: function(e) {
+      alert("An error ocurred while downloading the model.");
+      //console.log("XHR Error : " + e);
     }
   }).send();
 
@@ -410,20 +412,20 @@ return function AGObjLoader(url) {
 
         if(t==cubes.length - 1) {
           scene.add(new PhiloGL.O3D.Model({
-              vertices: overtices,
-              textures: 'textures/terrain.png',
-              texCoords: otexcoords,
-              normals: onormals,
-              program: 'transparent'
+            vertices: overtices,
+            textures: 'textures/terrain.png',
+            texCoords: otexcoords,
+            normals: onormals,
+            program: 'transparent'
           }));
         }
         else {
           scene.add(new PhiloGL.O3D.Model({
-              vertices: overtices,
-              textures: 'textures/terrain.png',
-              texCoords: otexcoords,
-              normals: onormals,
-              program: 'fragment'
+            vertices: overtices,
+            textures: 'textures/terrain.png',
+            texCoords: otexcoords,
+            normals: onormals,
+            program: 'fragment'
           }));
         }
       }
@@ -431,7 +433,7 @@ return function AGObjLoader(url) {
       skybox = new AGSkyBox(metaCubeSize, -metaCubeSize/2, -metaCubeSize/2, -metaCubeSize/2);
       skybox.addToScene(scene);
 
-      //uiManager.splash.done();
+      self.app.hideSplashScreen();
     }
     else {
       setTimeout(addModels, 500);
@@ -527,7 +529,7 @@ return function AGObjLoader(url) {
             loading = Math.ceil(i*100/data.length);
             j = i;
             setTimeout(calcTerrain, 2);
-            //uiManager.splash.setProgressBar(Math.ceil(i*100/data.length));
+            self.app.setProgress(Math.ceil(i*100/data.length));
             break;
           }
           //Point : store it for usage in faces
@@ -555,60 +557,60 @@ return function AGObjLoader(url) {
             // Ex : f 6854//1 6855//1 10481//1
             if(data[i].substr(0, 1) == "f")
             {
-                var lineD = data[i].split(" ");
+              var lineD = data[i].split(" ");
 
-                var pt1 = lineD[1].split("//");
-                var pt2 = lineD[2].split("//");
-                var pt3 = lineD[3].split("//");
+              var pt1 = lineD[1].split("//");
+              var pt2 = lineD[2].split("//");
+              var pt3 = lineD[3].split("//");
 
-                //Get correct Vertices from their index
-                //Create a new Face
-                var aFace = new AGFace(v[pt1[0]-1][0]*50, v[pt1[0]-1][1]*50, v[pt1[0]-1][2]*50,
-                             v[pt2[0]-1][0]*50, v[pt2[0]-1][1]*50, v[pt2[0]-1][2]*50,
-                             v[pt3[0]-1][0]*50, v[pt3[0]-1][1]*50, v[pt3[0]-1][2]*50);
+              //Get correct Vertices from their index
+              //Create a new Face
+              var aFace = new AGFace(v[pt1[0]-1][0]*50, v[pt1[0]-1][1]*50, v[pt1[0]-1][2]*50,
+                           v[pt2[0]-1][0]*50, v[pt2[0]-1][1]*50, v[pt2[0]-1][2]*50,
+                           v[pt3[0]-1][0]*50, v[pt3[0]-1][1]*50, v[pt3[0]-1][2]*50);
 
               //Set its normal from stored normals index
-                aFace.normal = [normals[pt1[1]-1][0], normals[pt1[1]-1][1], normals[pt1[1]-1][2],
-                        normals[pt2[1]-1][0], normals[pt2[1]-1][1], normals[pt2[1]-1][2],
-                        normals[pt3[1]-1][0], normals[pt3[1]-1][1], normals[pt3[1]-1][2]];
+              aFace.normal = [normals[pt1[1]-1][0], normals[pt1[1]-1][1], normals[pt1[1]-1][2],
+                      normals[pt2[1]-1][0], normals[pt2[1]-1][1], normals[pt2[1]-1][2],
+                      normals[pt3[1]-1][0], normals[pt3[1]-1][1], normals[pt3[1]-1][2]];
 
-                //Set its corrected texture
-                aFace.setTexture(curMat, t, swap);
-                swap = !swap;
+              //Set its corrected texture
+              aFace.setTexture(curMat, t, swap);
+              swap = !swap;
 
-                // Calculate which AGCube the AGFace belongs to and push it inside.
+              // Calculate which AGCube the AGFace belongs to and push it inside.
 
-                // Special, separate cube for transparent textures. No collisions.
-                if(curMat == "Glass" || curMat == "WaterStationary") {
-                  cubes[cubes.length-1].faces.push(aFace);
-                  continue;
-                }
-                else if(curMat == "Torch") {
+              // Special, separate cube for transparent textures. No collisions.
+              if(curMat == "Glass" || curMat == "WaterStationary") {
+                cubes[cubes.length-1].faces.push(aFace);
+                continue;
+              }
+              else if(curMat == "Torch") {
 
-                  continue;
-                }
-                var cubeX, cubeY, cubeZ;
+                continue;
+              }
+              var cubeX, cubeY, cubeZ;
 
-                cubeX = Math.floor((aFace.poly.p1.x + metaCubeSize/2)/(metaCubeSize/rows));
-                cubeY = Math.floor((aFace.poly.p1.y + metaCubeSize/2)/(metaCubeSize/cols));
-                cubeZ = Math.floor((aFace.poly.p1.z + metaCubeSize/2)/(metaCubeSize/depth));
-                var index1 = cubeY*(cols*rows) + cubeZ*(depth) + cubeX;
-                if(cubes[index1])
-                  cubes[index1].faces.push(aFace);
+              cubeX = Math.floor((aFace.poly.p1.x + metaCubeSize/2)/(metaCubeSize/rows));
+              cubeY = Math.floor((aFace.poly.p1.y + metaCubeSize/2)/(metaCubeSize/cols));
+              cubeZ = Math.floor((aFace.poly.p1.z + metaCubeSize/2)/(metaCubeSize/depth));
+              var index1 = cubeY*(cols*rows) + cubeZ*(depth) + cubeX;
+              if(cubes[index1])
+                cubes[index1].faces.push(aFace);
 
-                cubeX = Math.floor((aFace.poly.p2.x + metaCubeSize/2)/(metaCubeSize/rows));
-                cubeY = Math.floor((aFace.poly.p2.y + metaCubeSize/2)/(metaCubeSize/cols));
-                cubeZ = Math.floor((aFace.poly.p2.z + metaCubeSize/2)/(metaCubeSize/depth));
-                var index2 = cubeY*(cols*rows) + cubeZ*(depth) + cubeX;
-                if(index2 != index1 && cubes[index2])
-                  cubes[index2].faces.push(aFace);
+              cubeX = Math.floor((aFace.poly.p2.x + metaCubeSize/2)/(metaCubeSize/rows));
+              cubeY = Math.floor((aFace.poly.p2.y + metaCubeSize/2)/(metaCubeSize/cols));
+              cubeZ = Math.floor((aFace.poly.p2.z + metaCubeSize/2)/(metaCubeSize/depth));
+              var index2 = cubeY*(cols*rows) + cubeZ*(depth) + cubeX;
+              if(index2 != index1 && cubes[index2])
+                cubes[index2].faces.push(aFace);
 
-                cubeX = Math.floor((aFace.poly.p3.x + metaCubeSize/2)/(metaCubeSize/rows));
-                cubeY = Math.floor((aFace.poly.p3.y + metaCubeSize/2)/(metaCubeSize/cols));
-                cubeZ = Math.floor((aFace.poly.p3.z + metaCubeSize/2)/(metaCubeSize/depth));
-                var index3 = cubeY*(cols*rows) + cubeZ*(depth) + cubeX;
-                if(index3 != index1 && index3 != index2 && cubes[index3])
-                  cubes[index3].faces.push(aFace);
+              cubeX = Math.floor((aFace.poly.p3.x + metaCubeSize/2)/(metaCubeSize/rows));
+              cubeY = Math.floor((aFace.poly.p3.y + metaCubeSize/2)/(metaCubeSize/cols));
+              cubeZ = Math.floor((aFace.poly.p3.z + metaCubeSize/2)/(metaCubeSize/depth));
+              var index3 = cubeY*(cols*rows) + cubeZ*(depth) + cubeX;
+              if(index3 != index1 && index3 != index2 && cubes[index3])
+                cubes[index3].faces.push(aFace);
 
             }
             //EOF
@@ -627,197 +629,196 @@ return function AGObjLoader(url) {
     mat = mat.split(" ")[1];
     mat = mat.split(".")[0];
     curMat = mat;
-      if(mat == "Web" ) {
-        curMat = "Web";
-        xT = 5*16+1;
-        yT = 12*16+1;
-      }
-      if(mat == "CoralOre" ) {
-        curMat = "CoralOre";
-        xT = 2*16+1;
-        yT = 13*16+1;
-      }
-      if(mat == "Lava" || mat == "LavaStationary" || mat == 10 || mat == 11) {
-        curMat = "Lava";
-        xT = 14*16+1;
-        yT = 0+1;
-      }
-      if(mat == "RedstoneOre" || mat == 73) {
-        curMat = "RedstoneOre";
-        xT = 3*16+1;
-        yT = 12*16+1;
-      }
-      if(mat == "Chest" || mat == 54) {
-        curMat = "Chest";
-        xT = 11*16+1;
-        yT = 14*16+1;
-      }
-      if(mat == "Bedrock" || mat == 7) {
-        curMat = "Bedrock";
-        xT = 1*16+1;
-        yT = 14*16+1;
-      }
-      if(mat == "WaterStationary" || mat == 8 || mat == 9) {
-        curMat = "WaterStationary";
-        xT = 14*16+1;
-        yT = 3*16+1;
-      }
-      if(mat == "Gravel" || mat == 13) {
-        curMat = "Gravel";
-        xT = 3*16+1;
-        yT = 14*16+1;
-        }
-      if(mat == "Wood" || mat == 17) {
-        curMat = "Wood";
-        xT = 4*16+1;
-        yT = 8*16+1;
-        }
-      if(mat == "Leaves" || mat == 18) {
-        curMat = "Leaves";
-        xT = 5*16+1;
-        yT = 12*16+1;
-        }
-      if(mat == "Dirt" || mat == 3) {
-        curMat = "Dirt";
-        xT = 2*16+1;
-        yT = 15*16+1;
-        }
-      if(mat == "WoodenPlank" || mat == 5) {
-        curMat = "WoodenPlank";
-        xT = 4*16+1;
-        yT = 15*16+1;
-        }
-      if(mat == "Cobblestone" || mat == 4) {
-        curMat = "Cobblestone";
-        xT = 0*16+1;
-        yT = 14*16+1;
-        }
-      if(mat == "GoldOre" || mat == 14) {
-        curMat = "GoldOre";
-        xT = 0*16+1;
-        yT = 13*16+1;
-        }
-      if(mat == "LapisLazuliOre" || mat == 21) {
-        curMat = "LapisLazuliOre";
-        xT = 0*16+1;
-        yT = 5*16+1;
-        }
-      if(mat == "Stone" || mat == 1) {
-        curMat = "Stone";
-        xT = 1*16+1;
-        yT = 15*16+1;
-        }
-      if(mat == "Sand" || mat == 12) {
-        curMat = "Sand";
-        xT = 2*16+1;
-        yT = 14*16+1;
-        }
-      if(mat == "Obsidian" || mat == 49) {
-        curMat = "Obsidian";
-        xT = 5*16+1;
-        yT = 13*16+1;
-        }
-      if(mat == "Grass" || mat == 2) {
-        curMat = "Grass";
-        xT = 0*16+1;
-        yT = 15*16+1;
-        }
-      if(mat == "Tall_Grass") {
-        curMat = "Grass";
-        xT = 0*16+1;
-        yT = 15*16+1;
-        }
-      if(mat == "Minecart_Tracks" || mat == 66) {
-        curMat = "Minecart_Tracks";
-        xT = 0*16+1;
-        yT = 7*16+1;
-        }
-      if(mat == "MonsterSpawner" || mat == 52) {
-        curMat = "MonsterSpawner";
-        xT = 0*16+1;
-        yT = 7*16+1;
-        }
-      if(mat == "CoalOre" || mat == 16) {
-        curMat = "CoalOre";
-        xT = 2*16+1;
-        yT = 13*16+1;
-        }
-      if(mat == "FlowerRed" || mat == 38) {
-        curMat = "FlowerRed";
-        xT = 12*16+1;
-        yT = 15*16+1;
-        }
-      if(mat == "DiamondOre" || mat == 56) {
-        curMat = "DiamondOre";
-        xT = 2*16+1;
-        yT = 12*16+1;
-        }
-      if(mat == "Fence" || mat == 85) {
-        curMat = "Fence";
-        xT = 0*16+1;
-        yT = 7*16+1;
-        }
-      if(mat == "StoneMoss" || mat == 48) {
-        curMat = "StoneMoss";
-        xT = 4*16+1;
-        yT = 9*16+1;
-        }
-      if(mat == "IronOre" || mat == 15) {
-        curMat = "IronOre";
-        xT = 1*16+1;
-        yT = 13*16+1;
-        }
-      if(mat == "Torch" || mat == 50) {
-        curMat = "Torch";
-        xT = 0*16+1;
-        yT = 10*16+1;
-        }
-      if(mat == "MushroomBrown" || mat == 39) {
-        curMat = "MushroomBrown";
-        xT = 13*16+1;
-        yT = 14*16+1;
-        }
-      if(mat == "FlowerYellow" || mat == 37) {
-        curMat = "FlowerYellow";
-        xT = 13*16+1;
-        yT = 15*16+1;
-        }
-      if(mat == "Glass" || mat == "GlassPane" || mat == 102 || mat == 20) {
-        curMat = "Glass";
-        xT = 3*16+1;
-        yT = 11*16+1;
-        }
-      if(mat == "Unknown" || mat == "StoneBricks" || mat == 98) {
-        curMat = "Unknown";
-        xT = 6*16+1;
-        yT = 12*16+1;
-        }
-      if(mat == "Sandstone" || mat == 24) {
-        curMat = "Sandstone";
-        xT = 0*16+1;
-        yT = 2*16+1;
-        }
-      if(mat == "Dead_Shrub") {
-        curMat = "Dead_Shrub";
-        xT = 5*16+1;
-        yT = 15*16+1;
-        }
-      if(mat == "IronBlock" || mat == 42) {
-        curMat = "IronBlock";
-        xT = 6*16+1;
-        yT = 14*16+1;
-        }
-      if(mat == "Clay" || mat == 82) {
-        curMat = "Clay";
-        xT = 8*16+1;
-        yT = 11*16+1;
-        }
-      if(mat == "Cactus" || mat == 81) {
-        curMat = "Cactus";
-        xT = 6*16+1;
-        yT = 11*16+1;
-        }
-      //console.log(curMat);
+    if(mat == "Web" ) {
+      curMat = "Web";
+      xT = 5*16+1;
+      yT = 12*16+1;
+    }
+    if(mat == "CoralOre" ) {
+      curMat = "CoralOre";
+      xT = 2*16+1;
+      yT = 13*16+1;
+    }
+    if(mat == "Lava" || mat == "LavaStationary" || mat == 10 || mat == 11) {
+      curMat = "Lava";
+      xT = 14*16+1;
+      yT = 0+1;
+    }
+    if(mat == "RedstoneOre" || mat == 73) {
+      curMat = "RedstoneOre";
+      xT = 3*16+1;
+      yT = 12*16+1;
+    }
+    if(mat == "Chest" || mat == 54) {
+      curMat = "Chest";
+      xT = 11*16+1;
+      yT = 14*16+1;
+    }
+    if(mat == "Bedrock" || mat == 7) {
+      curMat = "Bedrock";
+      xT = 1*16+1;
+      yT = 14*16+1;
+    }
+    if(mat == "WaterStationary" || mat == 8 || mat == 9) {
+      curMat = "WaterStationary";
+      xT = 14*16+1;
+      yT = 3*16+1;
+    }
+    if(mat == "Gravel" || mat == 13) {
+      curMat = "Gravel";
+      xT = 3*16+1;
+      yT = 14*16+1;
+    }
+    if(mat == "Wood" || mat == 17) {
+      curMat = "Wood";
+      xT = 4*16+1;
+      yT = 8*16+1;
+    }
+    if(mat == "Leaves" || mat == 18) {
+      curMat = "Leaves";
+      xT = 5*16+1;
+      yT = 12*16+1;
+    }
+    if(mat == "Dirt" || mat == 3) {
+      curMat = "Dirt";
+      xT = 2*16+1;
+      yT = 15*16+1;
+    }
+    if(mat == "WoodenPlank" || mat == 5) {
+      curMat = "WoodenPlank";
+      xT = 4*16+1;
+      yT = 15*16+1;
+    }
+    if(mat == "Cobblestone" || mat == 4) {
+      curMat = "Cobblestone";
+      xT = 0*16+1;
+      yT = 14*16+1;
+    }
+    if(mat == "GoldOre" || mat == 14) {
+      curMat = "GoldOre";
+      xT = 0*16+1;
+      yT = 13*16+1;
+    }
+    if(mat == "LapisLazuliOre" || mat == 21) {
+      curMat = "LapisLazuliOre";
+      xT = 0*16+1;
+      yT = 5*16+1;
+    }
+    if(mat == "Stone" || mat == 1) {
+      curMat = "Stone";
+      xT = 1*16+1;
+      yT = 15*16+1;
+    }
+    if(mat == "Sand" || mat == 12) {
+      curMat = "Sand";
+      xT = 2*16+1;
+      yT = 14*16+1;
+    }
+    if(mat == "Obsidian" || mat == 49) {
+      curMat = "Obsidian";
+      xT = 5*16+1;
+      yT = 13*16+1;
+    }
+    if(mat == "Grass" || mat == 2) {
+      curMat = "Grass";
+      xT = 0*16+1;
+      yT = 15*16+1;
+    }
+    if(mat == "Tall_Grass") {
+      curMat = "Grass";
+      xT = 0*16+1;
+      yT = 15*16+1;
+    }
+    if(mat == "Minecart_Tracks" || mat == 66) {
+      curMat = "Minecart_Tracks";
+      xT = 0*16+1;
+      yT = 7*16+1;
+    }
+    if(mat == "MonsterSpawner" || mat == 52) {
+      curMat = "MonsterSpawner";
+      xT = 0*16+1;
+      yT = 7*16+1;
+    }
+    if(mat == "CoalOre" || mat == 16) {
+      curMat = "CoalOre";
+      xT = 2*16+1;
+      yT = 13*16+1;
+    }
+    if(mat == "FlowerRed" || mat == 38) {
+      curMat = "FlowerRed";
+      xT = 12*16+1;
+      yT = 15*16+1;
+    }
+    if(mat == "DiamondOre" || mat == 56) {
+      curMat = "DiamondOre";
+      xT = 2*16+1;
+      yT = 12*16+1;
+    }
+    if(mat == "Fence" || mat == 85) {
+      curMat = "Fence";
+      xT = 0*16+1;
+      yT = 7*16+1;
+    }
+    if(mat == "StoneMoss" || mat == 48) {
+      curMat = "StoneMoss";
+      xT = 4*16+1;
+      yT = 9*16+1;
+    }
+    if(mat == "IronOre" || mat == 15) {
+      curMat = "IronOre";
+      xT = 1*16+1;
+      yT = 13*16+1;
+    }
+    if(mat == "Torch" || mat == 50) {
+      curMat = "Torch";
+      xT = 0*16+1;
+      yT = 10*16+1;
+    }
+    if(mat == "MushroomBrown" || mat == 39) {
+      curMat = "MushroomBrown";
+      xT = 13*16+1;
+      yT = 14*16+1;
+    }
+    if(mat == "FlowerYellow" || mat == 37) {
+      curMat = "FlowerYellow";
+      xT = 13*16+1;
+      yT = 15*16+1;
+    }
+    if(mat == "Glass" || mat == "GlassPane" || mat == 102 || mat == 20) {
+      curMat = "Glass";
+      xT = 3*16+1;
+      yT = 11*16+1;
+    }
+    if(mat == "Unknown" || mat == "StoneBricks" || mat == 98) {
+      curMat = "Unknown";
+      xT = 6*16+1;
+      yT = 12*16+1;
+    }
+    if(mat == "Sandstone" || mat == 24) {
+      curMat = "Sandstone";
+      xT = 0*16+1;
+      yT = 2*16+1;
+    }
+    if(mat == "Dead_Shrub") {
+      curMat = "Dead_Shrub";
+      xT = 5*16+1;
+      yT = 15*16+1;
+    }
+    if(mat == "IronBlock" || mat == 42) {
+      curMat = "IronBlock";
+      xT = 6*16+1;
+      yT = 14*16+1;
+    }
+    if(mat == "Clay" || mat == 82) {
+      curMat = "Clay";
+      xT = 8*16+1;
+      yT = 11*16+1;
+    }
+    if(mat == "Cactus" || mat == 81) {
+      curMat = "Cactus";
+      xT = 6*16+1;
+      yT = 11*16+1;
+    }
 
     t = [xT/256, yT/256, xT/256, (yT+14)/256, (xT+14)/256, (yT+14)/256, (xT+14)/256, yT/256];
 

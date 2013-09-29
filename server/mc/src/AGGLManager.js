@@ -1,178 +1,170 @@
-define(['philogl'], function() {
+define([
+  'underscore',
+  'lib/Events',
+  'philogl'
+],
+function (
+  _,
+  Events
+) {
 
-  PhiloGL.unpack();
+  var AGGLManager = function AGGLManager(opt) {
 
-  var regMovFact = 0;
-  var latMovFact = 0;
-  var gravFact = 0;
-  var jumpFact = 0;
-  var colFact = 1;
+    PhiloGL.unpack();
+    this.app = opt.app;
+    this.initialize(opt.canvas);
 
-  var oldMouseX = 0;
-  var oldMouseY = 0;
-  var xRot = 0;
-  var yRot = 0;
-  var xPos = 50;
-  var yPos = 200;
-  var zPos = 50;
-  var xPosT = xPos;
-  var yPosT = yPos;
-  var zPosT = zPos;
+  };
 
-  var ray = {x:0, y:0, z:0};
+  _.extend(AGGLManager.prototype, Events, {
 
-  var charHeight = 5;
-  var charWidth = 2;
-  var charDepth = 2;
+    textures    : [
+      'textures/terrain.png',
+      'textures/skybox.png'
+    ],
 
-  var speed = 200;
+    regMovFact  : 0,
+    latMovFact  : 0,
+    gravFact    : 0,
+    jumpFact    : 0,
+    colFact     : 1,
 
-  var oldTime;
-  var curTime;
-  var firstpos = true;
+    oldMouseX   : 0,
+    oldMouseY   : 0,
+    xRot        : 0,
+    yRot        : 0,
+    xPos        : 50,
+    xPosT       : 50,
+    yPos        : 200,
+    yPosT       : 200,
+    zPos        : 50,
+    zPosT       : 50,
 
-  //seconds
-  var jumpTime = 0.3;
-  var jumpStart;
-  var jumpHeight = 1;
+    ray         : { x:0, y:0, z:0 },
+    speed       : 200,
+    oldTime     : 0,
+    curTime     : 0,
+    firstPos    : true,
+    jumpTime    : 0.3,
+    jumpStart   : 0,
+    jumpHeight  : 1,
+    fps         : 0,
+    sampling    : false,
 
-  var scene;
-  var map;
+    scene       : null,
+    map         : null,
 
-  var cubes = [];
+    initialize  : function (canvasId) {
 
-  var fps;
-  var sampling = false;
+      var self = this;
 
-  var texturesSrc = ['textures/terrain.png', 'textures/skybox.png'];
-
-  var AGGLManager = function AGGLManager(canvasId) {
-
-    var self = this;
-
-    PhiloGL(canvasId, {
-      program: [{
-          id: 'vertex',
-            from: 'defaults'
-        }, {
-            id: 'fragment',
-            from: 'ids',
-            vs: 'per-fragment-lighting-vs',
-            fs: 'per-fragment-lighting-fs'
-        }, {
-          id: 'transparent',
-            from: 'ids',
-            vs: 'vsblend',
-            fs: 'fsblend'
-        }],
+      PhiloGL(canvasId, {
+        program: [
+          {
+            id: 'vertex',
+              from: 'defaults'
+          },
+          {
+              id: 'fragment',
+              from: 'ids',
+              vs: 'per-fragment-lighting-vs',
+              fs: 'per-fragment-lighting-fs'
+          },
+          {
+            id: 'transparent',
+              from: 'ids',
+              vs: 'vsblend',
+              fs: 'fsblend'
+          }
+        ],
         onLoad: function(app) {
 
-          //Unpack app properties
-          var gl = app.gl,
-          canvas = app.canvas,
-          camera = app.camera,
-          program = app.program,
-          raf = Fx.requestAnimationFrame || window.requestAnimationFrame;
+          self.gl = app.gl;
+          self.canvas = app.canvas;
+          self.camera = app.camera;
+          self.raf = Fx.requestAnimationFrame || window.requestAnimationFrame;
 
-          self.gl = gl;
-          self.canvas = canvas;
-          self.camera = camera;
-          self.raf = raf;
-
-          window.scene = app.scene;
-          scene = app.scene;
+          self.scene = app.scene;
           //Basic gl setup
-          gl.clearColor(0, 0, 0, 1);
-          gl.clearDepth(1.0);
-          gl.enable(gl.DEPTH_TEST);
-          gl.depthFunc(gl.LEQUAL);
-          gl.viewport(0, 0, +canvas.width, +canvas.height);
+          self.gl.clearColor(0, 0, 0, 1);
+          self.gl.clearDepth(1.0);
+          self.gl.enable(self.gl.DEPTH_TEST);
+          self.gl.depthFunc(self.gl.LEQUAL);
+          self.gl.viewport(0, 0, self.canvas.width, self.canvas.height);
 
           var p = 0;
+
+          self.trigger('load');
 
           //Run Drawing Loop
           self.draw();
         },
-      scene: {
-        lights: {
-         enable: true,
-         points: [{
-           position: {
-             x: 0, y: 250, z: 0
+        scene: {
+          lights: {
+           enable: true,
+           points: [{
+             position: {
+               x: 0, y: 250, z: 0
+             },
+             diffuse: {
+               r: 0.5, g: 0.5, b: 0.5
+             },
+             specular: {
+               r: 0.7, g: 0.7, b: 0.7
+             }
            },
-           diffuse: {
-             r: 0.5, g: 0.5, b: 0.5
-           },
-           specular: {
-             r: 0.7, g: 0.7, b: 0.7
-           }
-         },
-         {
-           position: {
-             x: -100, y: 200, z: 100
-           },
-           diffuse: {
-             r: 0.5, g: 0.5, b: 0.5
-           },
-           specular: {
-             r: 0.7, g: 0.7, b: 0.7
-           }
-         }],
-         ambient: {r: 0.5, g: 0.5, b: 0.5}
-       },
-       effects: {
-          fog: {
-            near: 0.5,
-            far: 1000,
-            color: {
-              r: 1, g: 1, b: 1
+           {
+             position: {
+               x: -100, y: 200, z: 100
+             },
+             diffuse: {
+               r: 0.5, g: 0.5, b: 0.5
+             },
+             specular: {
+               r: 0.7, g: 0.7, b: 0.7
+             }
+           }],
+           ambient: {r: 0.5, g: 0.5, b: 0.5}
+          },
+          effects: {
+            fog: {
+              near: 0.5,
+              far: 1000,
+              color: {
+                r: 1, g: 1, b: 1
+              }
             }
           }
-        }
-      },
-      camera: {
-          position: {
-              x: xPos, y: yPos, z: zPos
-          },
-          fov: 90,
-          far: 1000
         },
-        onError: function(z) {
-        alert("There was an error creating the app : " + z);
-      },
+        camera: {
+            position: {
+                x: self.xPos, y: self.yPos, z: self.zPos
+            },
+            fov: 90,
+            far: 1000
+          },
+          onError: function(z) {
+          alert("There was an error creating the app : " + z);
+        },
         events: {
-          /*
-          onKeyDown: function(e) {
 
-            if(uiManager.chat.getVisibility().isInputVisible)
-            {
-              if(e.key == 'enter') {
-                uiManager.chat.sendMessage();
-              }
-              else if(e.key == 'esc') {
-                uiManager.chat.toggleVisible();
-              }
-              return;
-            }
+          onKeyDown: function(e) {
             switch(e.key) {
                 case 'z':
-                  regMovFact = 0.1;
+                  self.regMovFact = 0.1;
                   break;
                 case 's':
-                  regMovFact = -0.1;
+                  self.regMovFact = -0.1;
                   break;
                 case 'q':
-                  latMovFact = 0.1;
+                  self.latMovFact = 0.1;
                   break;
                 case 'd':
-                  latMovFact = -0.1;
-                  break;
-                case 'enter':
-                  uiManager.toggleVisible();
+                  self.latMovFact = -0.1;
                   break;
                 case 'space':
-              if(!jumpFact)
-                jumpFact = 1;
+              if(!self.jumpFact)
+                self.jumpFact = 1;
                   break;
             }
 
@@ -182,203 +174,205 @@ define(['philogl'], function() {
             {
                 case 83:
                 case 90:
-                  regMovFact = 0;
+                  self.regMovFact = 0;
                   break;
                 case 81:
                 case 68:
-                  latMovFact = 0;
+                  self.latMovFact = 0;
                   break;
             }
           },
           onMouseMove: function(e) {
-            if(!uiManager.chat.isVisible) {
-              xRot = e.y*180/this.canvas.height;
-              yRot = e.x*1080/this.canvas.width;
-            }
-          }*/
+            self.xRot = e.y*180/self.canvas.height;
+            self.yRot = e.x*1080/self.canvas.width;
+          }
         },
         textures: {
-          src: texturesSrc,
-            parameters: [{
-              name: 'TEXTURE_MIN_FILTER',
-              value: 'NEAREST_MIPMAP_NEAREST',
-              generateMipmap: true
-            },
-            {
-              name: 'TEXTURE_MAG_FILTER',
-              value: 'LINEAR'
-            }]
+          src         : this.textures,
+          parameters  : [{
+            name: 'TEXTURE_MIN_FILTER',
+            value: 'NEAREST_MIPMAP_NEAREST',
+            generateMipmap: true
+          },
+          {
+            name: 'TEXTURE_MAG_FILTER',
+            value: 'LINEAR'
+          }]
         }
-    });
-  };
+      });
+    },
 
-  AGGLManager.prototype.draw = function draw() {
+    draw: function draw() {
 
-    var self = this;
+      var self = this;
 
-    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-    this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+      this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+      this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
-    oldTime = curTime;
-    curTime = new Date().getTime();
+      this.oldTime = this.curTime;
+      this.curTime = new Date().getTime();
 
-    if(!sampling) {
-      sampling = true;
-      setTimeout(function() {
-        //uiManager.topMenu.setFps(fps);
-        fps = 0;
-        sampling = false;
-      }, 1000);
-    }
+      if(!this.sampling) {
+        this.sampling = true;
+        setTimeout(function() {
+          //uiManager.topMenu.setFps(self.fps);
+          self.fps = 0;
+          self.sampling = false;
+        }, 1000);
+      }
 
       this.processCamera(this.camera);
-/*
-      for(var i in clients)
+
+      for(var i in this.app.clients)
       {
-        if(clients[i].toRemove)
+        if(this.app.clients[i].toRemove)
         {
-          clients[i].removeFromScene(scene);
-          clients[i] = null;
-          delete clients[i];
+          this.app.clients[i].removeFromScene(this.scene);
+          this.app.clients[i] = null;
+          delete this.app.clients[i];
         }
         else {
-          clients[i].model.update();
-          clients[i].addToScene(scene);
+          this.app.clients[i].addToScene(this.scene);
+          this.app.clients[i].model.update();
         }
       }
-*/
-    scene.render({
-      onBeforeRender: function(object, index) {
-        if(object.program == "transparent") {
-          self.gl.blendFunc(self.gl.SRC_ALPHA, self.gl.ONE);
-          //gl.disable(gl.DEPTH_TEST);
-          self.gl.enable(self.gl.BLEND);
+
+      this.scene.render({
+        onBeforeRender: function(object, index) {
+          if(object.program == "transparent") {
+            self.gl.blendFunc(self.gl.SRC_ALPHA, self.gl.ONE);
+            //gl.disable(gl.DEPTH_TEST);
+            self.gl.enable(self.gl.BLEND);
+          }
+        },
+        onAfterRender: function(object, index) {
+          if(object.program == "transparent") {
+            self.gl.blendFunc(self.gl.SRC_ALPHA, self.gl.ONE);
+            //gl.enable(gl.DEPTH_TEST);
+            self.gl.disable(self.gl.BLEND);
+          }
         }
-      },
-      onAfterRender: function(object, index) {
-        if(object.program == "transparent") {
-          self.gl.blendFunc(self.gl.SRC_ALPHA, self.gl.ONE);
-          //gl.enable(gl.DEPTH_TEST);
-          self.gl.disable(self.gl.BLEND);
+      });
+
+      this.fps++;
+      this.raf(this.draw.bind(this));
+    },
+
+    processMovement: function processMovement(camera) {
+      var elapsed = (this.curTime - this.oldTime)/1000;
+      if(!elapsed)
+        elapsed = 0.01;
+      var oldxPos = this.xPosT, oldzPos = this.zPosT, oldyPos = this.yPosT;
+      xRotRad = this.xRot/180*Math.PI;
+      yRotRad = this.yRot/180*Math.PI;
+
+      this.xPos = camera.position[0]-Math.sin(yRotRad)*(this.speed*elapsed);
+      this.yPos = camera.position[1]+Math.sin(xRotRad)*(this.speed*elapsed);
+      this.zPos = camera.position[2]+Math.cos(yRotRad)*(this.speed*elapsed);
+
+      if(this.jumpFact) {
+        if(!this.jumpStart)
+        {
+          this.jumpStart = new Date().getTime();
+          setTimeout(function() {
+            this.jumpFact = 0;
+            this.jumpStart = null;
+          }, this.jumpTime*1000);
+        }
+        else {
+          var alpha = (((new Date().getTime() - this.jumpStart)/(this.jumpTime*1000))*180)/180*Math.PI;
+          yPosT += Math.sin(alpha)*this.jumpHeight;
         }
       }
-    });
-    fps++;
-    this.raf(this.draw.bind(this));
-  };
 
-  AGGLManager.prototype.processMovement = function processMovement(camera) {
-    var elapsed = (curTime - oldTime)/1000;
-    if(!elapsed)
-      elapsed = 0.01;
-    var oldxPos = xPosT, oldzPos = zPosT, oldyPos = yPosT;
-    xRotRad = xRot/180*Math.PI;
-    yRotRad = yRot/180*Math.PI;
-
-    xPos = camera.position[0]-Math.sin(yRotRad)*(speed*elapsed);
-    yPos = camera.position[1]+Math.sin(xRotRad)*(speed*elapsed);
-    zPos = camera.position[2]+Math.cos(yRotRad)*(speed*elapsed);
-
-    if(jumpFact) {
-      if(!jumpStart)
+      if(this.gravFact && this.colFact && !this.jumpFact)
       {
-        jumpStart = new Date().getTime();
-        setTimeout(function() {
-          jumpFact = 0;
-          jumpStart = null;
-        }, jumpTime*1000);
-      }
-      else {
-        var alpha = (((new Date().getTime() - jumpStart)/(jumpTime*1000))*180)/180*Math.PI;
-        yPosT += Math.sin(alpha)*jumpHeight;
-      }
-    }
-
-    if(gravFact && colFact && !jumpFact)
-    {
-      var nray = {x:0, y:yPosT-(speed*elapsed)*gravFact*0.1-oldyPos, z:0};
-
-      if(nray.x || nray.y || nray.z)
-          ray = nray;
-
-      var colFactor = map.isColliding(-xPosT, yPosT-(speed*elapsed)*gravFact*0.1, -zPosT, ray);
-      if(!colFactor.xz)
-      {
-        yPosT -= (speed*elapsed)*gravFact*0.1;
-      }
-    }
-
-    if(regMovFact)
-    {
-      if(colFact)
-      {
-
-        var nray = {x:xPosT-Math.sin(yRotRad)*(speed*elapsed)*regMovFact-oldxPos, y:yPosT+Math.sin(xRotRad)*(speed*elapsed)*regMovFact-oldyPos, z:zPosT+Math.cos(yRotRad)*(speed*elapsed)*regMovFact-oldzPos};
+        var nray = {x:0, y:yPosT-(this.speed*elapsed)*this.gravFact*0.1-oldyPos, z:0};
 
         if(nray.x || nray.y || nray.z)
-          ray = nray;
+            ray = nray;
 
-        var colFactor = map.isColliding(-xPosT-Math.sin(yRotRad)*(speed*elapsed)*regMovFact, yPosT+Math.sin(xRotRad)*(speed*elapsed)*regMovFact, -zPosT+Math.cos(yRotRad)*(speed*elapsed)*regMovFact, ray);
-
-        if(!colFactor.yz)
-        {
-          xPosT += -Math.sin(yRotRad)*(speed*elapsed)*regMovFact;
-        }
+        var colFactor = this.app.map.isColliding(-this.xPosT, this.yPosT-(this.speed*elapsed)*this.gravFact*0.1, -this.zPosT, ray);
         if(!colFactor.xz)
         {
-          if(!gravFact)
-            yPosT += +Math.sin(xRotRad)*(speed*elapsed)*regMovFact;
+          yPosT -= (this.speed*elapsed)*this.gravFact*0.1;
         }
-        if(!colFactor.xy)
+      }
+
+      if(this.regMovFact)
+      {
+        if(this.colFact)
         {
-          zPosT += +Math.cos(yRotRad)*(speed*elapsed)*regMovFact;
+
+          var nray = {x:this.xPosT-Math.sin(yRotRad)*(this.speed*elapsed)*this.regMovFact-oldxPos, y:this.yPosT+Math.sin(xRotRad)*(this.speed*elapsed)*this.regMovFact-oldyPos, z:this.zPosT+Math.cos(yRotRad)*(this.speed*elapsed)*this.regMovFact-oldzPos};
+
+          if(nray.x || nray.y || nray.z)
+            ray = nray;
+
+          var colFactor = this.app.map.isColliding(-this.xPosT-Math.sin(yRotRad)*(this.speed*elapsed)*this.regMovFact, this.yPosT+Math.sin(xRotRad)*(this.speed*elapsed)*this.regMovFact, -this.zPosT+Math.cos(yRotRad)*(this.speed*elapsed)*this.regMovFact, ray);
+
+          if(!colFactor.yz)
+          {
+            this.xPosT += -Math.sin(yRotRad)*(this.speed*elapsed)*this.regMovFact;
+          }
+          if(!colFactor.xz)
+          {
+            if(!this.gravFact) {
+              this.yPosT += +Math.sin(xRotRad)*(this.speed*elapsed)*this.regMovFact;
+            }
+          }
+          if(!colFactor.xy)
+          {
+            this.zPosT += +Math.cos(yRotRad)*(this.speed*elapsed)*this.regMovFact;
+          }
+        }
+        else {
+          this.xPosT += -Math.sin(yRotRad)*(this.speed*elapsed)*this.regMovFact;
+          this.yPosT += +Math.sin(xRotRad)*(this.speed*elapsed)*this.regMovFact;
+          this.zPosT += +Math.cos(yRotRad)*(this.speed*elapsed)*this.regMovFact;
+        }
+
+      }
+
+      if(this.latMovFact)
+      {
+        if(this.colFact) {
+          var latRay = {x: (this.xPosT + Math.cos(yRotRad)*(this.speed*elapsed)*this.latMovFact) - this.xPosT, y: 0, z: (this.zPosT + Math.sin(yRotRad)*(this.speed*elapsed)*this.latMovFact - this.zPosT)};
+
+          var colFactor = this.app.map.isCollidingLateral(-this.xPosT + Math.cos(yRotRad)*(this.speed*elapsed)*this.latMovFact, this.yPosT, -this.zPosT + Math.sin(yRotRad)*(this.speed*elapsed)*this.latMovFact, latRay);
+
+          if(!colFactor.yz) {
+            this.xPos += Math.cos(yRotRad)*(this.speed*elapsed)*this.latMovFact;
+            this.xPosT += Math.cos(yRotRad)*(this.speed*elapsed)*this.latMovFact;
+          }
+          if(!colFactor.xy) {
+            this.zPos += Math.sin(yRotRad)*(this.speed*elapsed)*this.latMovFact;
+            this.zPosT += Math.sin(yRotRad)*(this.speed*elapsed)*this.latMovFact;
+          }
+        }
+        else {
+          this.xPos += Math.cos(yRotRad)*(this.speed*elapsed)*this.latMovFact;
+          this.xPosT += Math.cos(yRotRad)*(this.speed*elapsed)*this.latMovFact;
+          this.zPos += Math.sin(yRotRad)*(this.speed*elapsed)*this.latMovFact;
+          this.zPosT += Math.sin(yRotRad)*(this.speed*elapsed)*this.latMovFact;
         }
       }
-      else {
-        xPosT += -Math.sin(yRotRad)*(speed*elapsed)*regMovFact;
-        yPosT += +Math.sin(xRotRad)*(speed*elapsed)*regMovFact;
-        zPosT += +Math.cos(yRotRad)*(speed*elapsed)*regMovFact;
+
+      if((oldxPos != this.xPosT || oldzPos != this.zPosT) || this.firstpos)
+      {
+        this.firstpos = false;
+        this.app.socket.emit('clientMoved', {x: this.xPosT, y:this.yPosT, z: this.zPosT});
       }
+    },
+
+    processCamera: function processCamera (camera) {
+
+      this.processMovement(camera);
+      camera.view.id().$rotateAxis(-xRotRad, new PhiloGL.Vec3(1, 0, 0)).$rotateAxis(yRotRad, new PhiloGL.Vec3(0, 1, 0)).$translate(this.xPosT, -this.yPosT, this.zPosT);
 
     }
+  });
 
-    if(latMovFact)
-    {
-      if(colFact) {
-        var latRay = {x: (xPosT + Math.cos(yRotRad)*(speed*elapsed)*latMovFact) - xPosT, y: 0, z: (zPosT + Math.sin(yRotRad)*(speed*elapsed)*latMovFact - zPosT)};
-
-        var colFactor = map.isCollidingLateral(-xPosT + Math.cos(yRotRad)*(speed*elapsed)*latMovFact, yPosT, -zPosT + Math.sin(yRotRad)*(speed*elapsed)*latMovFact, latRay);
-
-        if(!colFactor.yz) {
-          xPos += Math.cos(yRotRad)*(speed*elapsed)*latMovFact;
-          xPosT += Math.cos(yRotRad)*(speed*elapsed)*latMovFact;
-        }
-        if(!colFactor.xy) {
-          zPos += Math.sin(yRotRad)*(speed*elapsed)*latMovFact;
-          zPosT += Math.sin(yRotRad)*(speed*elapsed)*latMovFact;
-        }
-      }
-      else {
-        xPos += Math.cos(yRotRad)*(speed*elapsed)*latMovFact;
-        xPosT += Math.cos(yRotRad)*(speed*elapsed)*latMovFact;
-        zPos += Math.sin(yRotRad)*(speed*elapsed)*latMovFact;
-        zPosT += Math.sin(yRotRad)*(speed*elapsed)*latMovFact;
-      }
-    }
-
-    if((oldxPos != xPosT || oldzPos != zPosT) || firstpos === true)
-    {
-      firstpos = false;
-      //socket.emit('clientMoved', {x: xPosT, y:yPosT, z: zPosT});
-    }
-  };
-
-  AGGLManager.prototype.processCamera = function processCamera (camera) {
-
-    this.processMovement(camera);
-    camera.view.id().$rotateAxis(-xRotRad, new PhiloGL.Vec3(1, 0, 0)).$rotateAxis(yRotRad, new PhiloGL.Vec3(0, 1, 0)).$translate(xPosT, -yPosT, zPosT);
-
-  };
 
   return AGGLManager;
 

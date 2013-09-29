@@ -2,9 +2,6 @@
 <html>
   <head>
     <title>Arthur Jamain</title>
-    <style>
-      @import url('css/style.css');
-    </style>
 
     <script id="per-fragment-lighting-vs" type="x-shader/x-vertex">
       attribute vec3 position;
@@ -180,7 +177,10 @@
 
   <body onUnload="unloadAll()">
 
-    <div id="AGRoot"><canvas id="mainwindow" width="1280" height="800"></canvas></div>
+    <div id="AGRoot">
+      <a href="#" class="fullscreen"></a>
+      <canvas id="game" width="1280" height="800"></canvas>
+    </div>
 
   </body>
 </html>
