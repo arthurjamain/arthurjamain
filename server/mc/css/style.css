@@ -151,12 +151,6 @@ canvas {
     height: 100%;
     margin: 0 auto;
   }
-
-  .splashscreen {
-    left: 50%;
-    right: auto;
-  }
-
 }
 
 @keyframes slide {

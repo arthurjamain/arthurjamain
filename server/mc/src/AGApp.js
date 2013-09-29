@@ -39,7 +39,7 @@ define([
         app     : this
       });
       this.glManager.on('load', function() {
-        self.map = new AGObjLoader('http://localhost/mc/obj/tower.obj', self.glManager.scene, self);
+        self.map = new AGObjLoader(document.location.protocol + '//' + document.location.hostname + '/mc/obj/tower.obj', self.glManager.scene, self);
       });
     },
 
@@ -63,9 +63,6 @@ define([
       this.splash.appendChild(this.spinner);
       this.splash.appendChild(this.progressBar);
 
-      this.splash.style.width = $(c).width() + 'px';
-      this.splash.style.marginLeft = ($(c).width() / -2) + 'px';
-      console.log($(c).width());
 
       document.getElementById('AGRoot').appendChild(this.splash);
     },
