@@ -39,7 +39,7 @@ define([
         app     : this
       });
       this.glManager.on('load', function() {
-        self.map = new AGObjLoader(document.location.protocol + '//' + document.location.hostname + '/mc/obj/tower.obj', self.glManager.scene, self);
+        self.map = new AGObjLoader(document.location.protocol + '//' + document.location.hostname + '/mc/obj/Tower.obj', self.glManager.scene, self);
       });
     },
 
