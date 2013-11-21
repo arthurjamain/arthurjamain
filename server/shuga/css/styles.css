@@ -44,10 +44,20 @@
 
 #graphs .graph {
   float: left;
+  position: relative;
 }
 
 .graph h3 {
   text-align: center;
+}
+
+.graph .closebutton {
+  position: absolute;
+  top: 0;
+  right: 20px;
+  font-size: 20px;
+  cursor: pointer;
+  color: #AB5D5D;
 }
 
 .cf:before,
