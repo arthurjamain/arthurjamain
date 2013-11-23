@@ -4,25 +4,53 @@
 var GRAPHS = {
   'getcallsclient': {           title: 'Calls (Method of communication)',           type: 'StackedBar'},
   'getcallscharacters': {       title: 'Calls (Characters)',                        type: 'StackedBar'},
-  'getcallsusers': {            title: 'Calls (User Ancienty)',                     type: 'StackedBar'},
-  'getmsgdmvscmt': {            title: 'Messages (Direct Messages vs. Comments)',   type: 'StackedBar'},
-  'getmsgdmpercharacter': {     title: 'Messages (Direct Messages per Character)',  type: 'stackedbar'},
-  'getmsgcmtperconf': {         title: 'Messages (Comments per Confessions)',       type: 'stackedbar'},
-  'getcallsstate': {            title: 'Geolocated Calls',                          type: 'stackedbar'},
-  'getgender': {                title: 'Genders',                                   type: 'stackedbar'},
-  'getage': {                   title: 'Age',                                       type: 'stackedbar'},
-  'getsessionlength': {         title: 'Average Session Length',                    type: 'stackedbar'},
-  'gettransfers': {             title: 'Transfers to NACA',                         type: 'stackedbar'},
-  'getconfovertime': {          title: 'Confessions Listening',                     type: 'stackedbar'},
+  'getcallsusers': {            title: 'Calls (Registered Users)',                  type: 'StackedBar'},
+  'getmsgdmvscmt': {            title: 'Messages (Direct Message vs Comment)',   type: 'StackedBar'},
+  'getmsgdmpercharacter': {     title: 'Messages (Direct Message / Character)',  type: 'StackedBar'},
+  'getmsgcmtperconf': {         title: 'Messages (Comments per Confessions)',       type: 'StackedBar'},
+  'getcallsstate': {            title: 'Geolocated Calls',                          type: 'StackedBar'},
+  'getgender': {                title: 'Genders',                                   type: 'Doughnut'},
+  'getage': {                   title: 'Age',                                       type: 'Doughnut'},
+  'getsessionlength': {         title: 'Average Session Length',                    type: 'StackedBar'},
+  'gettransfers': {             title: 'Transfers to NACA',                         type: 'StackedBar'},
+  'getconfovertime': {          title: 'Confessions Listening',                     type: 'StackedBar'},
   'getexitpoints': {            title: 'Exit Points',                               type: 'Bar'},
-  'getactions': {               title: 'Actions per User',                          type: 'stackedbar'},
-  'getbanned': {                title: 'Banned Users',                              type: 'stackedbar'},
+  'getactions': {               title: 'Actions per User',                          type: 'StackedBar'},
+  'getbanned': {                title: 'Banned Users',                              type: 'StackedBar'},
   'geterror': {                 title: 'Errors',                                    type: 'StackedBar'}
+};
+var LABELS = {
+  'getcallsusers': {
+    '0': 'New User',
+    '1': 'Registered User'
+  },
+  'getgender': {
+    '0': 'Unknown',
+    '1': 'Male',
+    '2': 'Female'
+  },
+  'getage': {
+    '0': 'Unknown'
+  },
+  'getmsgdmvscmt': {
+    'x-messages-left': 'Messages',
+    'x-comments-left': 'Comments'
+  },
+  'getexitpoints': {
+    'main-menu': 'Main Menu',
+    'confession': 'Confession',
+    'post-confession-menu': 'Post Cofession Menu',
+    'registration-confirm': 'Registration Confirm',
+    'registration-accept': 'Registration Accept',
+    'message-accept': 'Message Accept',
+    'friends': 'Friends'
+  }
 };
 var COLORS = [
   '#69D2E7',
   '#F38630',
-  '#E0E4CC'
+  '#E0E4CC',
+  '#F04448'
 ];
 var MAX_LABELS = 20;
 
@@ -133,10 +161,9 @@ Collection.prototype.getLabels = function (lp, up) {
   return labels;
 
 };
-Collection.prototype.getStackedBarData = function (d) {
+Collection.prototype.getStackedBarData = function (d, ponderatingProp) {
   var data = { labels: [], datasets: [] };
   var self = this;
-
   var lp = this.from.getPrecision(this.precision, this.from.getFullYear());
   var up = this.to.getPrecision(this.precision, this.to.getFullYear());
 
@@ -154,6 +181,7 @@ Collection.prototype.getStackedBarData = function (d) {
 
   var dsnumber = 0;
   var biggests = {};
+
   for (var i in d) {
     if (d.hasOwnProperty(i)) {
       var ld = new Date(this.from);
@@ -163,6 +191,21 @@ Collection.prototype.getStackedBarData = function (d) {
         var ldp = ld.getPrecision(this.precision);
         var key = ldp.p + '-' + ld.getFullYear();
         var val = d[i][key] ? d[i][key].length : 0;
+        if (ponderatingProp && d[i][key]) {
+          if (typeof d[i][key][0][ponderatingProp] !== 'undefined') {
+            val = 0;
+            for (var h = 0 ; h < d[i][key].length ; h += 1) {
+              val += parseInt(d[i][key][h].events[ponderatingProp], 10);
+            }
+          } else if (typeof d[i][key][0].events[ponderatingProp] !== 'undefined') {
+            val = 0;
+            for (var g = 0 ; g < d[i][key].length ; g += 1) {
+              val += parseInt(d[i][key][g].events[ponderatingProp], 10);
+            }
+          } else {
+            console.log(':(');
+          }
+        }
         biggests[key] = biggests[key] ? biggests[key] + val : val;
         dsdata.push(val);
         ld.setDate(ld.getDate() + step);
@@ -170,14 +213,13 @@ Collection.prototype.getStackedBarData = function (d) {
       data.datasets.push({
         fillColor: COLORS[dsnumber],
         data: dsdata,
-        value: i
+        value: LABELS[arguments.callee.caller.name] ? LABELS[arguments.callee.caller.name][i] : i
       });
-
       dsnumber += 1;
     }
   }
-
   var biggest = _.max(biggests, function (e) { return e; });
+  console.log(biggest);
   _.extend(data, this.getScaleData(biggest));
 
   return data;
@@ -216,7 +258,11 @@ Collection.prototype.getPonderedStackedBarData = function (d) {
         var val = 0;
         if (d[i][key]) {
           for (var k = 0 ; k < d[i][key].length ; k += 1) {
-            val += parseInt(d[i][key][k][i], 10) || 0;
+            if (typeof d[i][key][k][i] !== 'undefined') {
+              val += parseInt(d[i][key][k][i], 10) || 0;
+            } else if (typeof d[i][key][k].events[i] !== 'undefined') {
+              val += parseInt(d[i][key][k].events[i], 10) || 0;
+            }
           }
         }
         biggests[key] = biggests[key] ? biggests[key] + val : val;
@@ -226,7 +272,7 @@ Collection.prototype.getPonderedStackedBarData = function (d) {
       data.datasets.push({
         fillColor: COLORS[dsnumber],
         data: dsdata,
-        value: i
+        value: LABELS[arguments.callee.caller.name] ? LABELS[arguments.callee.caller.name][i] : i
       });
 
       dsnumber += 1;
@@ -240,7 +286,7 @@ Collection.prototype.getPonderedStackedBarData = function (d) {
 };
 Collection.prototype.getScaleData = function (b) {
   var data = {};
-  var bl = (b + '').length - 1;
+  var bl = (b + '').split('.')[0].length - 1;
   data.scaleSteps = 10;
   data.scaleStepWidth = Math.pow(10, bl);
 
@@ -275,7 +321,7 @@ Collection.prototype.getcallscharacters = function () {
       });
   return this.getStackedBarData(d);
 };
-Collection.prototype.getcallsusers = function () {
+Collection.prototype.getcallsusers = function getcallsusers() {
   var d =
     _.groupBy(
       _.filter(
@@ -286,7 +332,8 @@ Collection.prototype.getcallsusers = function () {
       function (el) {
         return el.events['x-registered'];
       });
-  return this.getStackedBarData(d);
+  var data = this.getStackedBarData(d);
+  return data;
 };
 Collection.prototype.geterror = function () {
   var d =
@@ -296,10 +343,10 @@ Collection.prototype.geterror = function () {
         return el.events['x-error'] && el.events['x-error'].length;
       });
   return this.getStackedBarData({
-    errors: d
+    'Errors': d
   });
 };
-Collection.prototype.getexitpoints = function () {
+Collection.prototype.getexitpoints = function getexitpoints() {
   var d =
     _.groupBy(
       _.filter(
@@ -311,11 +358,57 @@ Collection.prototype.getexitpoints = function () {
         return el.events['x-final-state'];
       }
     );
-  return this.getSingleBarData(d);
+  return this.getSimpleBarData(d);
 };
-Collection.prototype.getSingleBarData = function (data) {
+Collection.prototype.getgender = function getgender() {
+  var d =
+    _.groupBy(this.entries, function (el) {
+      return !!el.events['x-user-gender'] ? el.events['x-user-gender'] : 0;
+    });
+
+  return this.getDoughnutData(d);
+};
+Collection.prototype.getage = function getage() {
+  var d =
+    _.groupBy(this.entries, function (el) {
+      return !!el.events['x-user-age'] ? el.events['x-user-age'] : 0;
+    });
+
+  return this.getDoughnutData(d);
+};
+Collection.prototype.getbanned = function getbanned() {
+  var d =
+    _.filter(
+      this.entries,
+      function (el) {
+        return !!el.events['x-banuser'];
+      }
+    );
+  return this.getStackedBarData({
+    'Banned Users': d
+  });
+};
+Collection.prototype.getDoughnutData = function getDoughnutData(data) {
+  var values = [];
+  var i = 0;
+  for (var k in data) {
+    if (data.hasOwnProperty(k)) {
+      values.push({
+        value: data[k].length,
+        color: COLORS[i],
+        label: LABELS[arguments.callee.caller.name] && LABELS[arguments.callee.caller.name][k] ? LABELS[arguments.callee.caller.name][k] : k
+      });
+      i += 1;
+    }
+  }
+  return values;
+};
+Collection.prototype.getSimpleBarData = function (data) {
   var labels = _.keys(data);
   var values = [];
+  for (var k = 0 ; k < labels.length ; k += 1) {
+    labels[k] = LABELS[arguments.callee.caller.name] && LABELS[arguments.callee.caller.name][labels[k]] ? LABELS[arguments.callee.caller.name][labels[k]] : labels[k];
+  }
   _.each(data, function (el) {
     values.push(el.length);
     return;
@@ -324,8 +417,7 @@ Collection.prototype.getSingleBarData = function (data) {
     labels: labels,
     datasets: [{
       fillColor: COLORS[0],
-      data: values,
-      value: 'Exit Point'
+      data: values
     }]
   };
 
@@ -336,12 +428,45 @@ Collection.prototype.getSingleBarData = function (data) {
   return barData;
 };
 // can be greatly optimized
-Collection.prototype.getmsgdmvscmt = function () {
+Collection.prototype.getmsgdmvscmt = function getmsgdmvscmt() {
   return this.getPonderedStackedBarData({
     'x-messages-left': this.entries,
     'x-comments-left': this.entries
   });
 };
+Collection.prototype.getconfovertime = function getconfovertime() {
+  var data =
+    _.groupBy(
+      _.filter(
+        this.entries,
+        function (el) {
+          return el.type === '1';
+        }),
+      function (el) {
+        return el.events['x-character-name'];
+      }
+    );
+
+  return this.getStackedBarData(data, 'x-confessions-played');
+};
+Collection.prototype.getmsgdmpercharacter = function () {
+  var data =
+    _.groupBy(
+      _.filter(
+        this.entries,
+        function (el) {
+          return el.type === '1';
+        }),
+      function (el) {
+        return el.events['x-character-name'];
+      }
+    );
+
+    console.log(data);
+
+  return this.getStackedBarData(data, 'x-messages-left');
+};
+
 Collection.prototype.getPieChartView = function () {
   var gr = _.groupBy(this.entries, function (el) { return el.type; });
   return _.map(gr, function (el, i) {
@@ -353,11 +478,20 @@ var Legend = function (params) {
   this.el = document.createElement('ul');
   this.el.className = 'legend';
   this.itemTemplate = '<div class="color" style="background:<%= color %>"></div><p><%=value%></p>';
+  var li;
 
-  for (var i = 0 ; i < params.datasets.length ; i += 1) {
-    var li = document.createElement('li');
-    li.innerHTML = _.template(this.itemTemplate, { color: params.datasets[i].fillColor, value: params.datasets[i].value});
-    this.el.appendChild(li);
+  if (_.isArray(params)) {
+    for (var k = 0 ; k < params.length ; k += 1) {
+      li = document.createElement('li');
+      li.innerHTML = _.template(this.itemTemplate, { color: params[k].color, value: params[k].label});
+      this.el.appendChild(li);
+    }
+  } else {
+    for (var i = 0 ; i < params.datasets.length ; i += 1) {
+      li = document.createElement('li');
+      li.innerHTML = _.template(this.itemTemplate, { color: params.datasets[i].fillColor, value: params.datasets[i].value});
+      this.el.appendChild(li);
+    }
   }
 };
 
@@ -415,13 +549,19 @@ Graph.prototype.drawGraph = function () {
 
   var data = this.data[this.graphId].call(this.data);
   var graph = this.type;
+  var options = {};
+  if (this.type === 'Doughnut') {
 
-  this.chart[graph].call(this.chart, data, {
-    scaleOverride : true,
-    scaleSteps : data.scaleSteps,
-    scaleStepWidth : data.scaleStepWidth,
-    scaleStartValue : 0,
-  });
+  } else {
+    _.extend(options, {
+      scaleOverride : true,
+      scaleSteps : data.scaleSteps,
+      scaleStepWidth : data.scaleStepWidth,
+      scaleStartValue : 0,
+    });
+  }
+
+  this.chart[graph].call(this.chart, data, options);
   this.legend = new Legend(data);
   this.el.appendChild(this.legend.el);
 };
@@ -511,6 +651,7 @@ App.prototype.removeGraph = function (e) {
 };
 App.prototype.onGraphChange = function (e) {
   if ($(e.target).is(':checked')) {
+    $(e.target).addClass('checked');
     if (this.data) {
       this.createGraph(e.target.value);
     } else {
