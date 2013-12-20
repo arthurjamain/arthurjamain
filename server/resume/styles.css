@@ -2,6 +2,7 @@ body {
   font-family: Georgia;
   color: #444;
   font-size: 13px;
+  background: #F8F8F8;
 }
 
 a {
@@ -9,15 +10,30 @@ a {
 }
 
 #main {
+  position: relative;
   width: 960px;
   margin: 80px auto;
   padding: 10px 80px 30px;
-  background: #F8F6F5;
-  border-top: 8px solid #666;
-  border-bottom: 2px solid #666;
+  background: transparent url(../img/background.png) repeat top left;
+  border-bottom: 2px solid #444;
   box-sizing: border-box;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
+  border-left: 1px solid #FFF;
+  border-right: 1px solid #FFF;
+  box-shadow: inset 0 0 40px -20px rgba(0,0,0,0.8);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+#main:before {
+  width: 100%;
+  height: 8px;
+  position: absolute;
+  left: 0;
+  top: -8px;
+  background: #444;
+  content: " ";
+  display: block;
 }
 
 #main .header {
@@ -59,11 +75,12 @@ a {
 #main .contact .pdf {
   display: block;
   float: left;
-  background: #666;
+  background: #444;
   color: white;
   padding: 6px 50px 6px 12px;
   margin-bottom: 6px;
   text-decoration: none;
+  text-shadow: none;
 }
 
 #main .contact .pdf:hover {
