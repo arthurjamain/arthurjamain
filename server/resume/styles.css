@@ -99,6 +99,10 @@ a {
   font-style: italic;
 }
 
+#main .content {
+  padding-bottom: 30px;
+}
+
 #main .content h2 {
   margin: 0;
   color: #333;
@@ -148,6 +152,8 @@ a {
 
 .last {
   border: none!important;
+  margin-bottom: 0!important;
+  padding-bottom: 0!important;
 }
 
 #main .row {
