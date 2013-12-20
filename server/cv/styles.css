@@ -1,0 +1,207 @@
+body {
+  font-family: Georgia;
+  color: #444;
+  font-size: 13px;
+}
+
+a {
+  color: #990003;
+}
+
+#main {
+  width: 960px;
+  margin: 80px auto;
+  padding: 10px 80px 30px;
+  background: #F8F6F5;
+  border-top: 8px solid #666;
+  border-bottom: 2px solid #666;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+}
+
+#main .header {
+  margin: 33px 0;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #CCC;
+}
+
+#main h1 {
+  font-size: 48px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  font-weight: normal;
+  margin: 0;
+  padding: 0;
+}
+
+#main .header h2 {
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: normal;
+  margin: 0;
+  padding: 0;
+}
+
+#main .header .name {
+  width: 66%;
+  float: left;
+}
+
+#main .header .contact {
+  width: 32%;
+  float: left;
+  margin-top: 7px;
+  font-size: 16px;
+  margin-left: 2%;
+}
+
+#main .contact .pdf {
+  display: block;
+  float: left;
+  background: #666;
+  color: white;
+  padding: 6px 50px 6px 12px;
+  margin-bottom: 6px;
+  text-decoration: none;
+}
+
+#main .contact .pdf:hover {
+  background: #222;
+}
+
+#main .contact .phone {
+  margin: 0;
+  padding: 0;
+  display: block;
+  color: #222;
+  text-decoration: none;
+}
+
+#main .rowname h2 {
+  font-style: italic;
+}
+
+#main .content h2 {
+  margin: 0;
+  color: #333;
+  font-weight: normal;
+  font-size: 20px;
+}
+
+#main .content p {
+  line-height: 18px;
+  padding-right: 3em;
+  margin: 0;
+}
+
+#main .content .enlarge {
+  font-size: 19px;
+  line-height: 24px;
+}
+
+#main .content .talent {
+  width: 32%;
+  float: left;
+}
+
+#main .talent h2 {
+  font-style: normal;
+  margin-bottom: 8px;
+}
+
+#main .talent p {
+  margin-top: 5px;
+  font-size: 13px;
+  line-height: 18px;
+  padding-right: 40px;
+}
+
+#main ul.talent {
+  padding: 0;
+  list-style: none;
+  margin: 0;
+}
+
+#main .talent li {
+  line-height: 24px;
+  border-bottom: 1px solid #CCC;
+  font-size: 13px;
+}
+
+.last {
+  border: none!important;
+}
+
+#main .row {
+  margin-bottom: 2em;
+  padding-bottom: 2em;
+  border-bottom: 1px solid #ccc;
+}
+
+#main .rowname {
+  width: 12%;
+  float: left;
+}
+
+#main .rowcontent {
+  width: 80%;
+  float: right;
+}
+
+#main .job {
+  position: relative;
+  margin-bottom: 13px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid #ccc;
+}
+
+#main .job h2 {
+  font-style: normal;
+}
+
+#main .job h3 {
+  color: #333;
+  font-size: 16px;
+  font-weight: normal;
+  margin: 0;
+}
+
+#main .job h4 {
+  position: absolute;
+  top: 5px;
+  right: 0;
+  font-size: 16px;
+  font-weight: normal;
+}
+
+#main .job p {
+  margin: 10px 0 40px 0;
+}
+
+h3 {
+  font-weight: normal;
+  margin: 0;
+}
+
+#main .footer {
+  padding: 1em 0 5em 0;
+  font-size: 92%;
+  border-top: 1px solid #ccc;
+  text-align: center;
+}
+
+#main .footer p {
+  margin-bottom: 0;
+  text-align: center;
+}
+
+.cf:before,
+.cf:after {
+    content: " "; /* 1 */
+    display: table; /* 2 */
+}
+
+.cf:after {
+    clear: both;
+}
