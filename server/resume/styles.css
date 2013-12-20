@@ -198,10 +198,18 @@ h3 {
 
 .cf:before,
 .cf:after {
-    content: " "; /* 1 */
-    display: table; /* 2 */
+    content: " ";
+    display: table;
 }
-
 .cf:after {
     clear: both;
+}
+
+@media print {
+  .pdf {
+    display: none!important;
+  }
+  #main {
+    margin-top: 0!important;
+  }
 }
